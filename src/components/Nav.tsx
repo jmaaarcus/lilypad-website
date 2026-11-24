@@ -2,9 +2,7 @@ import { List, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useMotionValueEvent } from "motion/react";
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router";
-import { AppStoreButton } from "./AppStoreButton";
 import { Logo } from "./Logo";
-import { ThemeToggle } from "./ThemeToggle";
 
 const LINKS = [
   { to: "/", label: "Overview" },
@@ -12,90 +10,65 @@ const LINKS = [
   { to: "/support", label: "Support" },
 ];
 
-/** Floating glass pill nav; gains a surface once the page scrolls. */
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { pathname } = useLocation();
   const reduce = useReducedMotion();
   const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 8));
+  useMotionValueEvent(scrollY, "change", (value) => setScrolled(value > 8));
   useEffect(() => setOpen(false), [pathname]);
 
-  // Only one Download button on screen at a time: hide the nav copy while the page's own is visible.
-  const [pageCtaVisible, setPageCtaVisible] = useState(false);
-  useEffect(() => {
-    const targets = document.querySelectorAll("[data-primary-cta]");
-    setPageCtaVisible(false);
-    if (!targets.length) return;
-    const seen = new Set<Element>();
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target)));
-      setPageCtaVisible(seen.size > 0);
-    });
-    targets.forEach((t) => io.observe(t));
-    return () => io.disconnect();
-  }, [pathname]);
+  const linkClass = "relative px-2.5 py-2 text-sm font-medium text-ink-2 transition-colors hover:text-ink aria-[current=page]:font-semibold aria-[current=page]:text-ink aria-[current=page]:underline aria-[current=page]:decoration-accent aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-[1.35rem]";
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4">
-      <nav
-        aria-label="Main"
-        className={`mx-auto flex h-14 max-w-6xl items-center justify-between rounded-full pl-4 pr-2 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
-          scrolled || open ? "glass" : ""
-        }`}
-      >
+    <header className={`sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-200 ${scrolled || open ? "border-line bg-bg shadow-[0_1px_0_var(--line)]" : "border-transparent bg-bg"}`}>
+      <nav aria-label="Main" className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
         <Logo />
-        <ul className="hidden items-center gap-1 md:flex">
-          {LINKS.map((l) => (
-            <li key={l.to}>
-              <NavLink to={l.to} end className="rounded-full px-3.5 py-2 text-sm font-medium text-ink-2 transition-colors hover:text-ink aria-[current=page]:bg-surface-2 aria-[current=page]:text-ink">
-                {l.label}
+
+        <ul className="hidden items-center gap-5 md:flex">
+          {LINKS.map((link) => (
+            <li key={link.to}>
+              <NavLink to={link.to} end className={linkClass}>
+                {link.label}
               </NavLink>
             </li>
           ))}
         </ul>
-        <div className="flex items-center gap-1.5">
-          <ThemeToggle />
-          <AnimatePresence initial={false}>
-            {!pageCtaVisible && (
-              <motion.span
-                key="nav-cta"
-                className="hidden lg:inline-flex"
-                initial={reduce ? false : { opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AppStoreButton size="sm" />
-              </motion.span>
-            )}
-          </AnimatePresence>
-          <button type="button" className="grid h-10 w-10 place-items-center rounded-full text-ink md:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Close Menu" : "Open Menu"} onClick={() => setOpen((o) => !o)}>
-            {open ? <X size={20} weight="bold" aria-hidden="true" /> : <List size={20} weight="bold" aria-hidden="true" />}
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="grid h-9 w-9 place-items-center rounded-sm border border-line text-ink transition-colors hover:bg-surface-2 md:hidden"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? <X size={19} weight="bold" aria-hidden="true" /> : <List size={19} weight="bold" aria-hidden="true" />}
           </button>
         </div>
       </nav>
+
       <AnimatePresence>
         {open && (
           <motion.div
             id="mobile-menu"
-            initial={reduce ? false : { opacity: 0, y: -8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            className="card absolute inset-x-3 top-[4.6rem] z-50 p-3 md:hidden"
+            initial={reduce ? false : { opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -6 }}
+            transition={{ duration: 0.16 }}
+            className="absolute inset-x-0 top-full z-50 border-b border-line bg-surface px-5 py-4 shadow-card md:hidden"
           >
             <ul className="grid">
-              {LINKS.map((l) => (
-                <li key={l.to}>
-                  <NavLink to={l.to} end className="block rounded-2xl px-4 py-3 text-lg font-medium text-ink-2 aria-[current=page]:bg-surface-2 aria-[current=page]:text-ink">
-                    {l.label}
+              {LINKS.map((link) => (
+                <li key={link.to}>
+                  <NavLink to={link.to} end className="block border-b border-line py-3 text-base font-medium text-ink-2 transition-colors hover:text-ink aria-[current=page]:text-ink">
+                    {link.label}
                   </NavLink>
                 </li>
               ))}
             </ul>
-            <AppStoreButton className="mt-2 w-full" />
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,31 +1,47 @@
+import { ArrowLeft } from "@phosphor-icons/react";
+import { Link } from "react-router";
 import docs from "virtual:legal";
-import { LiquidHeading } from "../components/LiquidHeading";
 
-/** Renders public/legal/<doc>.html wording unchanged, in the site's design. */
+/** Renders the approved public/legal HTML verbatim inside a redesigned document layout. */
 export function Legal({ doc }: { doc: "privacy" | "terms" }) {
-  const d = docs[doc];
+  const document = docs[doc];
+
   return (
-    <div className="relative mx-auto max-w-6xl px-5 pt-10 sm:px-6 md:pt-14">
-      <div aria-hidden="true" className="aurora pointer-events-none absolute left-1/2 w-screen -translate-x-1/2 -top-40 -z-10 h-[520px]" />
-      <header className="max-w-3xl">
-        <p className="eyebrow">Legal</p>
-        <LiquidHeading as="h1" write text={d.title} className="mt-4 text-[clamp(2.6rem,1.4rem+4.2vw,4.6rem)] leading-[1]" />
-        <p className="mt-4 text-ink-3">{d.meta}</p>
+    <div className="legal-page mx-auto max-w-6xl px-5 pb-20 pt-12 sm:px-7 md:pb-28 md:pt-16 lg:px-10">
+      <header className="legal-page-header">
+        <Link to="/" className="legal-back-link"><ArrowLeft size={15} aria-hidden="true" /> Back to Lilypad</Link>
+        <h1 className="display mt-4 max-w-[12ch] text-[clamp(3rem,1.8rem+4.6vw,5.6rem)] leading-[0.96]">{document.title}</h1>
+        <p className="legal-page-meta mt-5 text-sm">{document.meta}</p>
       </header>
-      <div className="mt-10 grid gap-12 lg:grid-cols-[14rem_1fr] lg:gap-16">
-        <nav aria-label="On this page" className="hidden lg:block">
-          <div className="sticky top-28">
-            <p className="text-sm font-medium text-ink">On this page</p>
-            <ol className="mt-4 grid gap-2.5 text-sm">
-              {d.sections.map((s) => (
-                <li key={s.id}>
-                  <a href={`#${s.id}`} className="text-ink-3 transition-colors hover:text-ink" dangerouslySetInnerHTML={{ __html: s.title }} />
+
+      <div className="legal-page-grid mt-10 grid gap-9 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20">
+        <details className="legal-mobile-toc lg:hidden">
+          <summary>Jump to a section</summary>
+          <nav aria-label="Legal document sections">
+            <ol>
+              {document.sections.map((section) => (
+                <li key={section.id}>
+                  <a href={`#${section.id}`} dangerouslySetInnerHTML={{ __html: section.title }} />
                 </li>
               ))}
             </ol>
-          </div>
-        </nav>
-        <article className="card prose-legal max-w-[72ch] p-7 sm:p-10" dangerouslySetInnerHTML={{ __html: d.body }} />
+          </nav>
+        </details>
+
+        <aside className="legal-sidebar hidden lg:block">
+          <nav aria-label="On this page" className="legal-toc sticky top-8">
+            <p className="eyebrow">On this page</p>
+            <ol className="mt-5 grid gap-3">
+              {document.sections.map((section) => (
+                <li key={section.id}>
+                  <a href={`#${section.id}`} dangerouslySetInnerHTML={{ __html: section.title }} />
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </aside>
+
+        <article className="prose-legal min-w-0" dangerouslySetInnerHTML={{ __html: document.body }} />
       </div>
     </div>
   );

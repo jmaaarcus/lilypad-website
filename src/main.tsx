@@ -2,9 +2,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import "./index.css";
+import "./new-design.css";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
-import { Pricing } from "./pages/Pricing";
 import { Support } from "./pages/Support";
 import { Legal } from "./pages/Legal";
 import { NotFound } from "./pages/NotFound";
@@ -18,7 +18,6 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="pricing" element={<Pricing />} />
           <Route path="support" element={<Support />} />
           <Route path="privacy" element={<Legal doc="privacy" />} />
           <Route path="terms" element={<Legal doc="terms" />} />

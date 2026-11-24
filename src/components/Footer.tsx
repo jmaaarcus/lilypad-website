@@ -1,44 +1,38 @@
-import { EnvelopeSimple } from "@phosphor-icons/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Link } from "react-router";
-import { CONTACT_EMAIL } from "../content/site";
-import { Logo } from "./Logo";
 
 const LINKS = [
-  { to: "/pricing", label: "Pricing" },
   { to: "/support", label: "Support" },
   { to: "/privacy", label: "Privacy" },
   { to: "/terms", label: "Terms" },
 ];
 
 export function Footer() {
+  const reduce = useReducedMotion();
+
   return (
-    <footer className="mt-20 border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-5 py-12 sm:px-6 md:flex-row md:items-start md:justify-between">
-        <div className="max-w-xs">
-          <Logo />
-          <p className="mt-4 text-sm leading-relaxed text-ink-3">Handwritten notes for iPad and Apple Pencil. No ads, no analytics, no tracking.</p>
-        </div>
-        <div className="flex flex-wrap gap-x-16 gap-y-8">
-          <nav aria-label="Footer">
-            <p className="text-sm font-medium text-ink">Lilypad</p>
-            <ul className="mt-3 grid gap-2.5 text-sm">
-              {LINKS.map((l) => (
-                <li key={l.to}>
-                  <Link to={l.to} className="text-ink-3 transition-colors hover:text-ink">{l.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div>
-            <p className="text-sm font-medium text-ink">Contact</p>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="mt-3 inline-flex items-center gap-2 text-sm text-ink-3 transition-colors hover:text-ink">
-              <EnvelopeSimple size={16} weight="bold" aria-hidden="true" />
-              {CONTACT_EMAIL}
-            </a>
-          </div>
+    <motion.footer
+      initial={reduce ? false : { opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+      className="site-footer neo-site-footer mt-10"
+    >
+      <div className="footer-bottom neo-footer-bottom mx-auto flex max-w-7xl flex-col gap-3 border-t px-5 py-4 text-xs sm:px-7 md:flex-row md:items-center md:justify-between lg:px-10">
+        <nav aria-label="Footer links" className="footer-link-column">
+          <ul className="flex flex-wrap justify-start gap-x-5 gap-y-2 text-xs">
+            {LINKS.map((link) => (
+              <li key={link.to}>
+                <Link to={link.to} className="footer-link">{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="flex flex-wrap justify-start gap-x-2 md:justify-end">
+          <span>Made by Anh Quoc Vo.</span>
+          <span>2026</span>
         </div>
       </div>
-      <div className="mx-auto max-w-6xl border-t border-line px-5 py-6 text-xs text-ink-3 sm:px-6">Made by Anh Quoc Vo in Vietnam. © 2026</div>
-    </footer>
+    </motion.footer>
   );
 }

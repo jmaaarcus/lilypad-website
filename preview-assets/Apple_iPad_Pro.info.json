@@ -1,0 +1,33 @@
+{
+  "uid": "e5ffb3c80b2d4d6690249f8ee2bdafbe",
+  "name": "Apple iPad Pro",
+  "author": "DatSketch",
+  "source_url": "https://sketchfab.com/3d-models/apple-ipad-pro-e5ffb3c80b2d4d6690249f8ee2bdafbe",
+  "project": "https://github.com/seryi882/sketchfab-downloader-extension",
+  "format": "glb+gltf+osgjs",
+  "geometry_count": 29,
+  "skipped_geometries": [
+    {
+      "name": "Line_Line_0",
+      "reason": "the viewer does not draw it (opacity 0)"
+    }
+  ],
+  "textures_downloaded": 0,
+  "textures_skipped": true,
+  "pack_mode": "full",
+  "max_texture_edge": "original",
+  "textures_embedded_in_glb": 0,
+  "animation_count": 0,
+  "skeleton_count": 0,
+  "bone_count": 0,
+  "files": [
+    "Apple_iPad_Pro.glb",
+    "model.gltf",
+    "model.bin",
+    "file.osgjs",
+    "model_file.bin",
+    "model_file_wireframe.bin",
+    "README.txt"
+  ],
+  "note": "Open .glb (textures packed inside when enabled) or model.gltf. See README.txt."
+}

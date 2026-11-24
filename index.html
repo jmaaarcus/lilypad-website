@@ -3,16 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lilypad: Handwritten Notes for iPad</title>
-    <meta name="description" content="Lilypad is a handwritten-notes app for iPad and Apple Pencil. PDF study, audio synced to ink, STEM tools, synced through your own iCloud." />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0a0c10" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" type="image/png" href="/brand/app-icon-64.png" />
-    <link rel="apple-touch-icon" href="/brand/app-icon-256.png" />
+    <title>Lilypad | A Place for Every Idea</title>
+    <meta name="description" content="A notebook for iPad. Write, study, sketch and keep PDFs, recordings and ideas together with Lilypad." />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" type="image/png" href="%BASE_URL%brand/app-icon-64.png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%brand/app-icon-256.png" />
     <script>
-      // Apply saved theme before paint (no flash). Stored locally only; no tracking.
-      try { var t = localStorage.getItem("lilypad-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+      document.documentElement.dataset.theme = "light";
     </script>
   </head>
   <body>

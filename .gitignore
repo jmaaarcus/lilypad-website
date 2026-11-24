@@ -4,3 +4,5 @@ dist
 *.local
 .env*
 *.tsbuildinfo
+.patch-backups/
+.vite/

@@ -5,15 +5,14 @@ export interface Period {
   id: PeriodId;
   label: string;
   price: string;
-  perMonth: string;
-  billed: string;
+  duration: string;
   save: number | null;
 }
 
 export const PERIODS: Period[] = [
-  { id: "monthly", label: "Monthly", price: "$1.29", perMonth: "$1.29", billed: "billed every month", save: null },
-  { id: "quarterly", label: "Quarterly", price: "$3.29", perMonth: "$1.10", billed: "billed every 3 months", save: 15 },
-  { id: "yearly", label: "Yearly", price: "$9.99", perMonth: "$0.83", billed: "billed every year", save: 35 },
+  { id: "monthly", label: "Monthly", price: "$1.29", duration: "month", save: null },
+  { id: "quarterly", label: "Quarterly", price: "$3.29", duration: "quarter", save: 15 },
+  { id: "yearly", label: "Yearly", price: "$9.99", duration: "year", save: 35 },
 ];
 
 export const FREE_FEATURES = [
@@ -59,20 +58,20 @@ export const FREE_VS_PRO: CompareGroup[] = [
   },
 ];
 
-// Competitor comparison, exactly as BRIEF.md. true = yes, false = not offered, "not yet" = Lilypad gap.
+// best lists only the columns with a clear advantage for that row. Neutral rows are intentionally unhighlighted.
 export const COMPETITORS = ["Lilypad Pro", "Goodnotes Essential", "Notability Plus", "CollaNote Premium"] as const;
-export const COMPETITOR_ROWS: { label: string; values: Cell[] }[] = [
-  { label: "Price", values: ["$9.99/yr", "$11.99/yr", "$15.99/yr (sale; reg. $19.99)", "$13.90 one-time"] },
-  { label: "Shorter plans", values: ["monthly, 3-month", false, false, false] },
+export const COMPETITOR_ROWS: { label: string; values: Cell[]; best?: number[] }[] = [
+  { label: "Regular price", values: ["$9.99/yr", "$11.99/yr", "$19.99/yr", "$13.90 one-time"] },
+  { label: "Shorter plans", values: ["Monthly, quarter", false, false, false], best: [0] },
   { label: "Free tier", values: ["3 notebooks + 1 whiteboard", "3 files", "5 notes", "10 pages/note"] },
-  { label: "Sync", values: ["your iCloud", "iCloud", "Notability Cloud", "iCloud Drive"] },
-  { label: "Account needed", values: ["Sign in with Apple", "for cloud features", "for cloud", "for collaboration"] },
-  { label: "Automatic PDF headings", values: [true, false, false, false] },
-  { label: "Regex Find", values: [true, false, false, false] },
-  { label: "Split View", values: [true, true, "multi-note", false] },
+  { label: "Sync", values: ["iCloud", "iCloud", "Notability Cloud", "iCloud"] },
+  { label: "Account needed", values: ["Sign in with Apple", "For cloud features", "For cloud", "For collaboration"] },
+  { label: "Automatic PDF headings", values: [true, false, false, false], best: [0] },
+  { label: "Regex Find", values: [true, false, false, false], best: [0] },
+  { label: "Split View", values: [true, true, "Multi-note", false] },
   { label: "Audio synced to ink", values: [true, false, true, true] },
-  { label: "Graphs / geometry / 3D", values: [true, false, false, false] },
-  { label: "Handwriting search", values: ["not yet", true, true, false] },
-  { label: "AI features", values: [false, "basic", "limited", "AI pen/chat"] },
+  { label: "Graphs / geometry / 3D", values: [true, false, false, false], best: [0] },
+  { label: "Handwriting search", values: ["-", true, true, false], best: [1, 2] },
+  { label: "AI features", values: [false, "Basic", "Limited", "AI pen/chat"], best: [1, 2, 3] },
 ];
-export const COMPETITOR_NOTE = "Competitor details from their public pricing pages, November 2026.";
+export const COMPETITOR_NOTE = "Subscription prices use regular, non-promotional rates. CollaNote is a one-time purchase. Competitor details checked November 2026.";
