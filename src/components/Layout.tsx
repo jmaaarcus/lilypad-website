@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router";
 import { ROUTES } from "../../site.config";
 import { Footer } from "./Footer";
+import { Header } from "./Header";
 
 export function Layout() {
   const { pathname, hash } = useLocation();
@@ -29,6 +30,7 @@ export function Layout() {
         Skip to Content
       </a>
       <div className="relative flex min-h-[100dvh] flex-col overflow-x-clip">
+        <Header />
         <main id="main" className="flex-1">
           <Outlet />
         </main>

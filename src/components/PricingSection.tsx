@@ -1,11 +1,13 @@
-import { Check, X } from "@phosphor-icons/react";
-import { motion, useReducedMotion } from "motion/react";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { Check, Question, Tag, X } from "@phosphor-icons/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Faq, type FaqItem } from "./Faq";
 import { Reveal } from "./Reveal";
+import { Section } from "./Section";
 import {
   COMPETITORS,
+  COMPETITOR_NOTE,
   COMPETITOR_ROWS,
   FREE_FEATURES,
   FREE_VS_PRO,
@@ -14,63 +16,43 @@ import {
   type PeriodId,
 } from "../content/pricing";
 
-const SECTION_TITLE = "display text-[clamp(2rem,1.25rem+2.8vw,3.35rem)] leading-[1.05]";
-
 export function PricingSection() {
   const [period, setPeriod] = useState<PeriodId>("yearly");
 
   return (
-    <section id="pricing" aria-labelledby="pricing-title" className="pricing-section scroll-mt-0">
-      <div className="pricing-band">
-        <div className="pricing-inner mx-auto max-w-6xl px-5 sm:px-7 lg:px-10">
-          <header className="pricing-heading">
-            <div>
-              <h2 id="pricing-title" className="display max-w-[11ch] text-[clamp(3.1rem,1.8rem+5vw,5.7rem)] leading-[0.94]">
-                Start with the essentials. Make room for more.
-              </h2>
-            </div>
-            <div className="mx-auto max-w-xl text-center lg:pb-2">
-              <p className="mx-auto max-w-[43ch] text-center text-lg leading-relaxed text-ink-2">
-                The free plan gives you a place to begin. Pro adds more notebooks, more space and tools for deeper work.
-              </p>
-            </div>
-          </header>
-
-          <div className="pricing-plan-toolbar">
-            <BillingToggle value={period} onChange={setPeriod} />
-          </div>
-
-          <div className="pricing-plans grid">
-            <Reveal y={18}>
-              <FreePlan />
-            </Reveal>
-            <Reveal delay={0.1} y={18}>
-              <ProPlan period={period} />
-            </Reveal>
-          </div>
+    <Section id="pricing" tone="orange" icon={Tag} eyebrow="Pricing" title="Start with the essentials." lead="Pro adds more notebooks, more space and tools for deeper work.">
+        <div className="mt-10 flex md:mt-12">
+          <BillingToggle value={period} onChange={setPeriod} />
         </div>
-      </div>
 
-      <FreeVsPro />
-      <Competitors />
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Reveal y={30}>
+            <PlanCard
+                id="free"
+                name="Free"
+                description="A good place to start, with the essentials already included."
+                price="$0"
+                unit="forever"
+                included="Included"
+                features={FREE_FEATURES}
+              />
+          </Reveal>
+          <Reveal delay={0.1} y={30}>
+            <ProCard period={period} />
+          </Reveal>
+        </div>
 
-    </section>
+        <FreeVsPro />
+        <Competitors />
+    </Section>
   );
 }
 
 export function PricingFaqSection() {
   return (
-    <section id="good-to-know" aria-labelledby="pricing-faq-title" className="good-to-know-section mx-auto max-w-6xl px-5 pb-20 pt-16 sm:px-7 md:pb-28 md:pt-24 lg:px-10">
-      <div className="good-to-know-layout grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20">
-        <header className="good-to-know-heading">
-          <h2 id="pricing-faq-title" className={`${SECTION_TITLE} max-w-[10ch]`}>Good to know.</h2>
-          <p className="mt-5 max-w-[34ch] leading-relaxed text-ink-2">Clear answers about subscriptions, your notebooks and using Lilypad on iPad.</p>
-        </header>
-        <div className="good-to-know-questions">
-          <Faq items={PRICING_FAQ} />
-        </div>
-      </div>
-    </section>
+    <Section id="good-to-know" tone="indigo" icon={Question} eyebrow="Questions" title="Good to know." lead="Clear answers about subscriptions, your notebooks and using Lilypad on iPad." edge="end">
+      <div className="mt-10 md:mt-12"><Faq items={PRICING_FAQ} /></div>
+    </Section>
   );
 }
 
@@ -88,7 +70,7 @@ function BillingToggle({ value, onChange }: { value: PeriodId; onChange: (period
   };
 
   return (
-    <div role="radiogroup" aria-label="Billing period" onKeyDown={onKey} className="billing-switcher grid w-full max-w-md grid-cols-3 sm:w-auto">
+    <div role="radiogroup" aria-label="Billing period" onKeyDown={onKey} className="grid w-full max-w-md grid-cols-3 rounded-[10px] border border-line bg-surface-2 p-1">
       {PERIODS.map((period, itemIndex) => {
         const active = period.id === value;
         return (
@@ -100,12 +82,11 @@ function BillingToggle({ value, onChange }: { value: PeriodId; onChange: (period
             aria-checked={active}
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(period.id)}
-            className={`billing-option flex min-w-0 flex-col items-center px-3 py-3 text-center transition-colors sm:min-w-[112px] ${active ? "is-active" : ""}`}
+            className="relative flex flex-col items-center rounded-[8px] px-3 py-2 text-center"
           >
-            <span className="billing-option-label">{period.label}</span>
-            <span className="billing-option-note">
-              {period.save ? `Save ${period.save}%` : "Flexible"}
-            </span>
+            {active && <motion.span layoutId="billing-pill" className="absolute inset-0 rounded-[8px] border border-line bg-surface shadow-soft" transition={{ type: "spring", stiffness: 380, damping: 32 }} />}
+            <span className="relative text-sm font-semibold text-ink">{period.label}</span>
+            <span className={`relative text-xs ${active && period.save ? "font-medium text-tone" : "text-ink-3"}`}>{period.save ? `Save ${period.save}%` : "Flexible"}</span>
           </button>
         );
       })}
@@ -113,167 +94,134 @@ function BillingToggle({ value, onChange }: { value: PeriodId; onChange: (period
   );
 }
 
-function CheckItem({ children, inverse = false }: { children: string; inverse?: boolean }) {
-  return (
-    <li className={`pricing-check-item flex items-start gap-3 text-sm leading-relaxed ${inverse ? "pricing-check-item-inverse" : "text-ink-2"}`}>
-      <Check size={17} weight="bold" className={`mt-0.5 shrink-0 ${inverse ? "" : "text-accent"}`} aria-hidden="true" />
-      <span>{children}</span>
-    </li>
-  );
-}
-
-/** Both tiers share exactly the same header, card and feature layout. */
-function PlanCard({ id, name, eyebrow, description, price, unit, billing, included, features }: {
-  id: string; name: string; eyebrow: string; description: string; price: string;
-  unit: string; billing?: string; included: string; features: readonly string[];
+function PlanCard({ id, name, description, price, unit, included, features, accent = false }: {
+  id: string; name: string; description: string; price: string; unit: string;
+  included: string; features: readonly string[]; accent?: boolean;
 }) {
   const reduce = useReducedMotion();
-
   return (
-    <motion.article
+    <article
       aria-labelledby={`${id}-plan-title`}
-      className={`pricing-plan ${id === "free" ? "pricing-plan-free" : "pricing-plan-pro"} h-full`}
-      whileHover={reduce ? undefined : { y: -4 }}
-      transition={{ type: "spring", stiffness: 280, damping: 24 }}
+      className={`relative flex h-full flex-col overflow-hidden rounded-card border bg-surface p-7 sm:p-8 ${accent ? "border-tone/40 shadow-[0_0_0_4px_color-mix(in_srgb,var(--tone)_10%,transparent)]" : "border-line"}`}
     >
-      <div className="pricing-plan-head">
-        <div className="pricing-plan-identity">
-          <p className="eyebrow">{eyebrow}</p>
-          <h3 id={`${id}-plan-title`} className="pricing-plan-name">{name}</h3>
-        </div>
-        <div className="pricing-price-block" aria-live="polite" aria-atomic="true">
-          <p className="pricing-price">
+      {accent && <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,var(--tone),var(--tone-2))]" />}
+      <div className="flex items-start justify-between gap-6">
+        <h3 id={`${id}-plan-title`} className="title-card">{name}</h3>
+        <p className="text-right" aria-live="polite" aria-atomic="true">
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={price}
-              initial={reduce ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.24, ease: "easeOut" }}
+              className="block text-5xl font-semibold tracking-[-0.05em] tabular-nums"
+              initial={reduce ? false : { opacity: 0, y: 14, rotateX: -60 }}
+              animate={{ opacity: 1, y: 0, rotateX: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -14, rotateX: 60 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             >
               {price}
             </motion.span>
-            <small>{unit}</small>
-          </p>
-          {billing && <p className="pricing-billing-line">{billing}</p>}
-        </div>
+          </AnimatePresence>
+          <span className="text-sm text-ink-3">{unit}</span>
+        </p>
       </div>
-      <p className="pricing-plan-description">{description}</p>
-      <p className="pricing-includes">{included}</p>
-      <ul className="pricing-feature-list grid">
-        {features.map((feature) => <CheckItem key={feature}>{feature}</CheckItem>)}
+      <p className="mt-6 leading-relaxed text-ink-2">{description}</p>
+      <p className="mt-8 border-t border-line pt-6 text-sm font-semibold">{included}</p>
+      <ul className="mt-4 grid gap-3">
+        {features.map((feature) => (
+          <li key={feature} className="flex items-start gap-3 text-[0.95rem] leading-relaxed text-ink-2">
+            <span className="check mt-0.5"><Check size={12} weight="bold" aria-hidden="true" /></span>
+            {feature}
+          </li>
+        ))}
       </ul>
-    </motion.article>
+    </article>
   );
 }
 
-function FreePlan() {
-  return <PlanCard id="free" name="Free" eyebrow="No subscription" description="A good place to start, with the essentials already included." price="$0" unit="forever" included="Included" features={FREE_FEATURES} />;
-}
-
-function ProPlan({ period }: { period: PeriodId }) {
+function ProCard({ period }: { period: PeriodId }) {
   const selected = PERIODS.find((item) => item.id === period)!;
-  return <PlanCard id="pro" name={`Pro ${selected.id.charAt(0).toUpperCase() + selected.id.slice(1)}`} eyebrow="For bigger projects" description="More space for your notebooks, plus the tools for deeper work." price={selected.price} unit={`per ${selected.duration}`} included="Everything in Free, plus:" features={PRO_FEATURES} />;
-}
-
-function Yes({ label = "Included", inverse = false }: { label?: string; inverse?: boolean }) {
   return (
-    <span className={`inline-grid h-6 w-6 place-items-center ${inverse ? "comparison-yes-inverse" : "text-accent"}`}>
-      <Check size={16} weight="bold" aria-hidden="true" />
-      <span className="sr-only">{label}</span>
-    </span>
+    <PlanCard
+      id="pro"
+      name={`Pro ${selected.label}`}
+      description="More space for your notebooks, plus the tools for deeper work."
+      price={selected.price}
+      unit={`per ${selected.duration}`}
+      included="Everything in Free, plus:"
+      features={PRO_FEATURES}
+      accent
+    />
   );
 }
 
-function No({ label = "Not included", inverse = false }: { label?: string; inverse?: boolean }) {
+function Mark({ value, label }: { value: boolean | string; label: string }) {
+  if (value === true) return <span className="check"><Check size={12} weight="bold" aria-hidden="true" /><span className="sr-only">{label}: included</span></span>;
+  if (value === false) return <span className="inline-flex text-ink-3/70"><X size={15} aria-hidden="true" /><span className="sr-only">{label}: not included</span></span>;
+  return <span className="tabular-nums">{value}</span>;
+}
+
+function TableShell({ label, children, hint }: { label: string; children: ReactNode; hint: string }) {
   return (
-    <span className={`inline-flex ${inverse ? "comparison-no-inverse" : "text-ink-3/60"}`}>
-      <X size={16} weight="regular" aria-hidden="true" />
-      <span className="sr-only">{label}</span>
-    </span>
+    <>
+      <div className="table-card mt-4 w-full overflow-x-auto" tabIndex={0} role="region" aria-label={label}>{children}</div>
+      <p className="mt-2 text-xs text-ink-3 md:hidden">{hint}</p>
+    </>
   );
 }
 
 function FreeVsPro() {
   return (
-    <section className="pricing-detail-section mx-auto max-w-6xl px-5 sm:px-7 lg:px-10">
-      <div className="free-pro-comparison overflow-x-auto" tabIndex={0} role="region" aria-label="Free and Pro plan comparison">
-        <table className="free-pro-table w-full min-w-[30rem] table-fixed border-collapse text-left">
+    <Reveal className="mt-12">
+      <h3 className="title-card">Free and Pro, side by side.</h3>
+      <TableShell label="Free and Pro plan comparison" hint="Swipe sideways to compare plans.">
+        <table className="w-full min-w-[30rem] border-collapse text-left text-sm">
           <caption className="sr-only">Features and limits in the Free and Lilypad Pro plans</caption>
-          <colgroup>
-            <col className="w-[64%]" />
-            <col className="w-[18%]" />
-            <col className="w-[18%]" />
-          </colgroup>
           <thead>
-            <tr>
-              <th scope="col" className="px-4 py-4">Feature</th>
-              <th scope="col" className="px-4 py-4 text-center">Free</th>
-              <th scope="col" className="px-4 py-4 text-center">Pro</th>
+            <tr className="text-ink-3">
+              <th scope="col" className="px-5 py-3 font-medium">Feature</th>
+              <th scope="col" className="w-40 px-4 py-3 text-center font-medium">Free</th>
+              <th scope="col" className="w-40 px-4 py-3 text-center font-medium">Pro</th>
             </tr>
           </thead>
-          {FREE_VS_PRO.map((group) => (
-            <tbody key={group.title}>
-              <tr>
-                <th scope="rowgroup" colSpan={3} className="free-pro-group-heading px-4 text-left">
-                  {group.title}
-                </th>
+          <tbody>
+            {FREE_VS_PRO.flatMap((group) => group.rows).map((row) => (
+              <tr key={row.label} className="border-t border-line/70">
+                <th scope="row" className="px-5 py-2.5 font-medium text-ink">{row.label}</th>
+                <td className="px-4 py-2.5 text-center"><Mark value={row.free} label={row.label} /></td>
+                <td className="px-4 py-2.5 text-center"><Mark value={row.pro} label={row.label} /></td>
               </tr>
-              {group.rows.map((row) => (
-                <tr key={row.label}>
-                  <th scope="row" className="free-pro-feature px-4 py-3 text-left">{row.label}</th>
-                  <td className="free-pro-value px-4 py-3">
-                    <PlanComparisonValue value={row.free} label={row.label} />
-                  </td>
-                  <td className="free-pro-value px-4 py-3">
-                    <PlanComparisonValue value={row.pro} label={row.label} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          ))}
+            ))}
+          </tbody>
         </table>
-      </div>
-      <p className="mt-2 text-xs text-ink-3 md:hidden">Swipe sideways to compare plans.</p>
-    </section>
+      </TableShell>
+    </Reveal>
   );
-}
-
-function PlanComparisonValue({ value, label }: { value: boolean | string; label: string }) {
-  if (value === true) return <Yes label={`${label}: included`} />;
-  if (value === false) return <No label={`${label}: not included`} />;
-  return <span className="tabular-nums">{value}</span>;
 }
 
 function Competitors() {
   return (
-    <section aria-labelledby="competitors-title" className="pricing-detail-section mx-auto max-w-6xl px-5 sm:px-7 lg:px-10">
-      <header className="grid gap-4 pb-7 md:grid-cols-[0.85fr_1.15fr] md:items-end md:gap-12">
-        <div>
-          <h2 id="competitors-title" className={SECTION_TITLE}>A fair look at the features.</h2>
-        </div>
-      </header>
-      <div className="comparison-scroll mt-5 overflow-x-auto" tabIndex={0} role="region" aria-label="Competitor comparison table, scrolls horizontally">
-        <table className="w-full min-w-[820px] border-collapse text-left">
+    <Reveal className="mt-12">
+      <h3 id="competitors-title" className="title-card">A fair look at the features.</h3>
+      <TableShell label="Competitor comparison table, scrolls horizontally" hint="Swipe sideways to compare the columns.">
+        <table className="w-full min-w-[760px] border-collapse text-left text-sm">
           <caption className="sr-only">Lilypad Pro compared with Goodnotes Essential, Notability Plus and CollaNote Premium</caption>
           <thead>
             <tr>
-              <th scope="col" className="sticky left-0 z-[1] w-[19%] bg-bg px-4 py-5"><span className="sr-only">Feature</span></th>
-              {COMPETITORS.map((competitor) => (
-                <th key={competitor} scope="col" className="px-4 py-5 text-sm font-semibold text-ink">
-                  {competitor}
-                </th>
+              <th scope="col" className="sticky left-0 z-[1] w-[22%] bg-surface-2 px-5 py-3"><span className="sr-only">Feature</span></th>
+              {COMPETITORS.map((competitor, index) => (
+                <th key={competitor} scope="col" className={`whitespace-nowrap px-4 py-3 font-semibold ${index === 0 ? "text-tone" : "text-ink"}`}>{competitor}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {COMPETITOR_ROWS.map((row) => (
-              <tr key={row.label}>
-                <th scope="row" className="sticky left-0 z-[1] bg-bg px-4 py-3.5 text-sm font-medium text-ink">{row.label}</th>
+              <tr key={row.label} className="border-t border-line/70">
+                <th scope="row" className="sticky left-0 z-[1] bg-surface px-5 py-2.5 font-medium text-ink">{row.label}</th>
                 {row.values.map((value, index) => {
-                  const isBest = row.best?.includes(index) ?? false;
+                  const best = row.best?.includes(index) ?? false;
                   return (
-                    <td key={index} className={`px-4 py-3.5 text-sm ${isBest ? "comparison-best-cell" : "text-ink-2"}`}>
-                      <Value value={value} />
-                      {isBest ? <span className="sr-only">Clear advantage</span> : null}
+                    <td key={index} className={`px-4 py-2.5 ${best ? "bg-[color-mix(in_srgb,var(--tone)_9%,white)] font-medium text-ink" : "text-ink-2"}`}>
+                      {value === true ? <Mark value label="Yes" /> : value === false || value === "-" ? <span className="text-ink-3" aria-label="Not available">-</span> : value}
+                      {best && <span className="sr-only">Clear advantage</span>}
                     </td>
                   );
                 })}
@@ -281,16 +229,10 @@ function Competitors() {
             ))}
           </tbody>
         </table>
-      </div>
-      <p className="mt-2 text-xs text-ink-3 md:hidden">Swipe sideways to compare the columns.</p>
-    </section>
+      </TableShell>
+      <p className="mt-3 max-w-[70ch] text-sm text-ink-3">{COMPETITOR_NOTE}</p>
+    </Reveal>
   );
-}
-
-function Value({ value }: { value: boolean | string }) {
-  if (value === true) return <Yes label="Yes" />;
-  if (value === false || value === "-") return <span className="comparison-dash" aria-label="Not available">-</span>;
-  return <span>{value}</span>;
 }
 
 const PRICING_FAQ: FaqItem[] = [
@@ -312,7 +254,7 @@ const PRICING_FAQ: FaqItem[] = [
   },
   {
     q: "Can I use Lilypad on iPhone or Mac?",
-    a: "No. Lilypad is made for iPad and requires iPadOS 26 or later.",
+    a: "No. Lilypad is made for iPad and requires iPadOS 18 or later.",
   },
   {
     q: "Where are my notebooks stored?",

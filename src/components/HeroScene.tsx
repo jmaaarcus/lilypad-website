@@ -1,320 +1,155 @@
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { MotionValue } from "motion/react";
+import { Suspense, useEffect, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
-import { IPadFrame } from "./Screenshot";
-import type { Shot } from "../content/screenshots";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { asset } from "../content/site";
+import { fitScreenshot } from "./ipadTexture";
 
-type HeroSceneProps = {
-  shot: Shot;
-  reduceMotion?: boolean;
+type SceneProps = {
+  file: string;
+  /** 0 while the hero is in view, 1 once it has scrolled away. */
+  progress: MotionValue<number>;
+  animate: boolean;
+  active: boolean;
+  onReady: () => void;
 };
 
-type SceneErrorBoundaryProps = {
-  children: ReactNode;
-  fallback: ReactNode;
-};
+const damp = THREE.MathUtils.damp;
 
-class SceneErrorBoundary extends Component<SceneErrorBoundaryProps, { hasError: boolean }> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    return this.state.hasError ? this.props.fallback : this.props.children;
-  }
-}
-
-function roundedRectangle(width: number, height: number, radius: number) {
-  const left = -width / 2;
-  const right = width / 2;
-  const bottom = -height / 2;
-  const top = height / 2;
-  const shape = new THREE.Shape();
-
-  shape.moveTo(left + radius, bottom);
-  shape.lineTo(right - radius, bottom);
-  shape.quadraticCurveTo(right, bottom, right, bottom + radius);
-  shape.lineTo(right, top - radius);
-  shape.quadraticCurveTo(right, top, right - radius, top);
-  shape.lineTo(left + radius, top);
-  shape.quadraticCurveTo(left, top, left, top - radius);
-  shape.lineTo(left, bottom + radius);
-  shape.quadraticCurveTo(left, bottom, left + radius, bottom);
-
-  return shape;
-}
-
-function createExtrudedRectangle(width: number, height: number, radius: number, depth: number, bevel = 0) {
-  return new THREE.ExtrudeGeometry(roundedRectangle(width, height, radius), {
-    depth,
-    bevelEnabled: bevel > 0,
-    bevelSegments: 4,
-    bevelSize: bevel,
-    bevelThickness: bevel,
-    curveSegments: 10,
-    steps: 1,
-  });
-}
-
-/** A quiet paper texture for the device render, not a representation of the app UI. */
-function createNotebookTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1400;
-  canvas.height = 1050;
-  const context = canvas.getContext("2d");
-
-  if (!context) return new THREE.CanvasTexture(canvas);
-
-  context.fillStyle = "#f8f8f4";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  context.strokeStyle = "rgba(83, 111, 145, 0.10)";
-  context.lineWidth = 2;
-  for (let y = 84; y < canvas.height; y += 70) {
-    context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(canvas.width, y);
-    context.stroke();
-  }
-
-  context.strokeStyle = "rgba(196, 112, 112, 0.24)";
-  context.lineWidth = 3;
-  context.beginPath();
-  context.moveTo(148, 0);
-  context.lineTo(148, canvas.height);
-  context.stroke();
-
-  context.lineCap = "round";
-  context.lineJoin = "round";
-  context.strokeStyle = "#3b78e5";
-  context.lineWidth = 9;
-  context.beginPath();
-  context.moveTo(230, 270);
-  context.bezierCurveTo(340, 220, 390, 330, 500, 280);
-  context.bezierCurveTo(590, 235, 650, 310, 760, 270);
-  context.stroke();
-
-  context.strokeStyle = "rgba(32, 37, 45, 0.62)";
-  context.lineWidth = 6;
-  context.beginPath();
-  context.moveTo(230, 400);
-  context.bezierCurveTo(380, 380, 450, 430, 610, 395);
-  context.moveTo(230, 470);
-  context.bezierCurveTo(370, 450, 500, 495, 700, 465);
-  context.moveTo(230, 540);
-  context.bezierCurveTo(360, 520, 480, 560, 650, 535);
-  context.stroke();
-
-  context.strokeStyle = "rgba(59, 120, 229, 0.72)";
-  context.lineWidth = 7;
-  context.beginPath();
-  context.moveTo(875, 690);
-  context.bezierCurveTo(930, 640, 1010, 735, 1090, 675);
-  context.bezierCurveTo(1140, 640, 1190, 690, 1240, 650);
-  context.stroke();
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-  return texture;
-}
-
-function NotebookPaperScreen({ geometry }: { geometry: THREE.BufferGeometry }) {
-  const texture = useMemo(createNotebookTexture, []);
-
-  return (
-    <mesh geometry={geometry} position={[0, 0, 0.182]}>
-      <meshBasicMaterial map={texture} toneMapped={false} />
-    </mesh>
-  );
-}
-
-function ScreenshotTexture({ file, geometry }: { file: string; geometry: THREE.BufferGeometry }) {
-  const texture = useLoader(THREE.TextureLoader, asset(`screenshots/${file}`));
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-
-  return (
-    <mesh geometry={geometry} position={[0, 0, 0.182]}>
-      <meshBasicMaterial map={texture} toneMapped={false} />
-    </mesh>
-  );
-}
-
-function DeviceScreen({ shot, geometry }: { shot: Shot; geometry: THREE.BufferGeometry }) {
-  if (shot.file) return <ScreenshotTexture file={shot.file} geometry={geometry} />;
-  return <NotebookPaperScreen geometry={geometry} />;
-}
-
-function WritingTool() {
-  return (
-    <group position={[1.1, -1.48, 0.31]} rotation={[0.04, 0.08, -0.23]}>
-      <mesh castShadow rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.038, 0.038, 2.18, 32]} />
-        <meshPhysicalMaterial color="#edf0f3" metalness={0.32} roughness={0.28} clearcoat={0.85} />
-      </mesh>
-      <mesh castShadow position={[1.13, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
-        <coneGeometry args={[0.038, 0.17, 24]} />
-        <meshStandardMaterial color="#aab2bc" metalness={0.8} roughness={0.24} />
-      </mesh>
-      <mesh position={[-1.08, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.039, 0.039, 0.045, 32]} />
-        <meshStandardMaterial color="#c3c9d0" metalness={0.72} roughness={0.3} />
-      </mesh>
-      <mesh position={[-0.86, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.0395, 0.0395, 0.025, 32]} />
-        <meshStandardMaterial color="#a8b0ba" metalness={0.85} roughness={0.22} />
-      </mesh>
-    </group>
-  );
-}
-
-function Device({ shot, reduceMotion }: HeroSceneProps) {
-  const group = useRef<THREE.Group>(null);
-  const { size } = useThree();
-  const useShadows = size.width > 680;
-  const bodyGeometry = useMemo(() => createExtrudedRectangle(3.82, 2.88, 0.2, 0.15, 0.025), []);
-  const paperGeometry = useMemo(() => createExtrudedRectangle(3.9, 2.94, 0.2, 0.025, 0.008), []);
-  const screenGeometry = useMemo(() => new THREE.ShapeGeometry(roundedRectangle(3.52, 2.64, 0.12), 12), []);
-  const responsiveScale = size.width < 560 ? 0.78 : size.width < 900 ? 0.9 : 1;
-
-  useFrame((state, delta) => {
-    if (!group.current || reduceMotion) return;
-
-    const pointerX = size.width > 680 ? state.pointer.x : 0;
-    const pointerY = size.width > 680 ? state.pointer.y : 0;
-    const targetX = -0.2 + pointerY * 0.075;
-    const targetY = -0.14 + pointerX * 0.11;
-    group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, targetX, 3.6, delta);
-    group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, targetY, 3.6, delta);
-    group.current.rotation.z = THREE.MathUtils.damp(group.current.rotation.z, -0.025 + pointerX * 0.018, 3.6, delta);
-    group.current.position.y = THREE.MathUtils.damp(group.current.position.y, Math.sin(state.clock.elapsedTime * 0.7) * 0.035, 2.4, delta);
-  });
-
-  return (
-    <>
-      <ambientLight intensity={1.25} />
-      <directionalLight
-        castShadow={useShadows}
-        position={[-4.5, 5.5, 7]}
-        intensity={2.7}
-        shadow-mapSize-width={512}
-        shadow-mapSize-height={512}
-        shadow-camera-left={-5}
-        shadow-camera-right={5}
-        shadow-camera-top={5}
-        shadow-camera-bottom={-5}
-      />
-      <directionalLight position={[4, -2, 5]} intensity={0.85} color="#b9d1ff" />
-      <mesh position={[0, -0.12, -0.52]} receiveShadow={useShadows}>
-        <planeGeometry args={[100, 100]} />
-        <shadowMaterial transparent opacity={0.14} />
-      </mesh>
-
-      <group ref={group} scale={responsiveScale} rotation={[-0.2, -0.14, -0.025]}>
-        <mesh geometry={paperGeometry} position={[-0.075, 0.055, -0.105]} rotation={[0, 0, -0.012]} castShadow={useShadows}>
-          <meshStandardMaterial color="#e9e8e1" roughness={0.86} />
-        </mesh>
-        <mesh geometry={paperGeometry} position={[-0.035, 0.025, -0.07]} rotation={[0, 0, -0.006]} castShadow={useShadows}>
-          <meshStandardMaterial color="#f7f6f0" roughness={0.82} />
-        </mesh>
-        <mesh geometry={bodyGeometry} castShadow={useShadows} receiveShadow={useShadows}>
-          <meshPhysicalMaterial color="#242a31" metalness={0.72} roughness={0.27} clearcoat={0.9} clearcoatRoughness={0.2} />
-        </mesh>
-        <Suspense fallback={null}>
-          <DeviceScreen shot={shot} geometry={screenGeometry} />
-        </Suspense>
-        <mesh position={[1.79, 1.29, 0.183]}>
-          <sphereGeometry args={[0.021, 16, 16]} />
-          <meshBasicMaterial color="#080a0d" />
-        </mesh>
-        <WritingTool />
-      </group>
-    </>
-  );
-}
-
-export function HeroScene({ shot, reduceMotion = false }: HeroSceneProps) {
-  const sceneRef = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(true);
-  const [pageVisible, setPageVisible] = useState(() => document.visibilityState === "visible");
-  const [contextLost, setContextLost] = useState(false);
-  const [isConstrained, setIsConstrained] = useState(() => window.matchMedia("(max-width: 640px)").matches);
-
-  const fallback = (
-    <div className="hero-scene-fallback">
-      <IPadFrame shot={shot} priority />
-    </div>
-  );
-
+function Environment() {
+  const { gl, scene } = useThree();
   useEffect(() => {
-    const node = sceneRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry.isIntersecting),
-      { rootMargin: "120px" },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const updatePageVisibility = () => setPageVisible(document.visibilityState === "visible");
-    document.addEventListener("visibilitychange", updatePageVisibility);
-    updatePageVisibility();
-    return () => document.removeEventListener("visibilitychange", updatePageVisibility);
-  }, []);
-
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 640px)");
-    const updateConstrainedState = () => setIsConstrained(media.matches);
-    media.addEventListener("change", updateConstrainedState);
-    return () => media.removeEventListener("change", updateConstrainedState);
-  }, []);
-
-  useEffect(() => {
-    const canvas = sceneRef.current?.querySelector("canvas");
-    if (!canvas) return;
-
-    const onContextLost = (event: Event) => {
-      event.preventDefault();
-      setContextLost(true);
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const room = new RoomEnvironment();
+    const target = pmrem.fromScene(room, 0.04);
+    scene.environment = target.texture;
+    room.dispose();
+    pmrem.dispose();
+    return () => {
+      scene.environment = null;
+      target.dispose();
     };
+  }, [gl, scene]);
+  return null;
+}
 
-    canvas.addEventListener("webglcontextlost", onContextLost, false);
-    return () => canvas.removeEventListener("webglcontextlost", onContextLost, false);
-  }, []);
+function Tablet({ file, onReady }: { file: string; onReady: () => void }) {
+  const gltf = useLoader(GLTFLoader, asset("models/ipad-pro.glb"));
+  const raw = useLoader(THREE.TextureLoader, asset(`screenshots/${file}`));
 
-  if (contextLost) return fallback;
-  if (reduceMotion || isConstrained) return fallback;
+  const { model, texture } = useMemo(() => {
+    const root = gltf.scene.clone(true);
+    const screen = root.getObjectByName("Display");
+    if (!(screen instanceof THREE.Mesh)) throw new Error("The tablet model has no Display mesh");
+    screen.geometry.computeBoundingBox();
+    const box = screen.geometry.boundingBox!;
+    const fitted = fitScreenshot(raw, (box.max.x - box.min.x) / (box.max.y - box.min.y));
+    fitted.flipY = false; // glTF UV origin.
+    fitted.colorSpace = THREE.SRGBColorSpace;
+    fitted.anisotropy = 8;
+    fitted.needsUpdate = true;
+    screen.material = new THREE.MeshBasicMaterial({ map: fitted, toneMapped: false });
+    return { model: root, texture: fitted };
+  }, [gltf, raw]);
 
+  useEffect(() => {
+    onReady();
+    return () => texture.dispose();
+  }, [texture, onReady]);
+
+  return <primitive object={model} />;
+}
+
+type SolidKind = "box" | "cylinder" | "cone" | "octahedron";
+const SOLIDS: { kind: SolidKind; position: [number, number, number]; color: string; scale: number; speed: number; phase: number }[] = [
+  { kind: "box", position: [-1.42, 0.92, 0.7], color: "#3b78e5", scale: 0.36, speed: 0.55, phase: 0 },
+  { kind: "cylinder", position: [1.45, 0.98, 0.45], color: "#f4f7fc", scale: 0.34, speed: 0.45, phase: 1.7 },
+  { kind: "cone", position: [1.38, -0.9, 0.9], color: "#7aa6f0", scale: 0.36, speed: 0.6, phase: 3.1 },
+  { kind: "octahedron", position: [-1.36, -0.88, 1.0], color: "#d9e5f8", scale: 0.34, speed: 0.5, phase: 4.4 },
+];
+
+function Solid({ kind, position, color, scale, speed, phase, animate }: (typeof SOLIDS)[number] & { animate: boolean }) {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    const mesh = ref.current;
+    if (!mesh || !animate) return;
+    const t = state.clock.elapsedTime * speed + phase;
+    mesh.position.y = position[1] + Math.sin(t) * 0.1;
+    mesh.rotation.x = 0.5 + t * 0.35;
+    mesh.rotation.y = 0.6 + t * 0.5;
+  });
   return (
-    <SceneErrorBoundary fallback={fallback}>
-      <div
-        ref={sceneRef}
-        className="hero-scene"
-        role="img"
-        aria-label="A three-dimensional iPad with layered notebook paper and a slim writing tool."
-      >
-        <Canvas
-          aria-hidden="true"
-          shadows
-          dpr={[1, 1.35]}
-          frameloop={!reduceMotion && isInView && pageVisible ? "always" : "demand"}
-          camera={{ position: [0, 0, 7.5], fov: 32 }}
-          gl={{ alpha: true, antialias: true, powerPreference: "default" }}
-          onCreated={({ gl }) => {
-            gl.outputColorSpace = THREE.SRGBColorSpace;
-            gl.toneMapping = THREE.ACESFilmicToneMapping;
-          }}
-        >
-          <Device shot={shot} reduceMotion={reduceMotion} />
-        </Canvas>
-      </div>
-    </SceneErrorBoundary>
+    <mesh ref={ref} position={position} scale={scale} rotation={[0.5, 0.6, 0]}>
+      {kind === "box" && <boxGeometry args={[1, 1, 1]} />}
+      {kind === "cylinder" && <cylinderGeometry args={[0.5, 0.5, 1, 48]} />}
+      {kind === "cone" && <coneGeometry args={[0.6, 1.05, 48]} />}
+      {kind === "octahedron" && <octahedronGeometry args={[0.68]} />}
+      <meshPhysicalMaterial color={color} roughness={0.28} metalness={0.05} clearcoat={1} clearcoatRoughness={0.18} />
+    </mesh>
+  );
+}
+
+function GroundShadow() {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 256;
+    const ctx = canvas.getContext("2d")!;
+    const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    gradient.addColorStop(0, "rgba(28, 52, 104, 0.42)");
+    gradient.addColorStop(1, "rgba(28, 52, 104, 0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+  useEffect(() => () => texture.dispose(), [texture]);
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.32, 0]} scale={[4.4, 1.5, 1]}>
+      <planeGeometry />
+      <meshBasicMaterial map={texture} transparent depthWrite={false} />
+    </mesh>
+  );
+}
+
+/** Pointer parallax and scroll turn; the solids move more than the tablet for depth. */
+function Rig({ progress, animate, children, depth = 1 }: { progress: MotionValue<number>; animate: boolean; children: ReactNode; depth?: number }) {
+  const group = useRef<THREE.Group>(null);
+  useFrame((state, delta) => {
+    const g = group.current;
+    if (!g) return;
+    const p = animate ? progress.get() : 0;
+    const px = animate ? state.pointer.x : 0;
+    const py = animate ? state.pointer.y : 0;
+    g.rotation.x = damp(g.rotation.x, -0.34 - py * 0.1 * depth + p * 0.4, 4, delta);
+    g.rotation.y = damp(g.rotation.y, -0.1 + px * 0.2 * depth + p * 0.35, 4, delta);
+    g.position.x = damp(g.position.x, px * 0.08 * depth, 4, delta);
+    g.position.y = damp(g.position.y, p * 0.5, 4, delta);
+  });
+  return <group ref={group}>{children}</group>;
+}
+
+export default function HeroScene({ file, progress, animate, active, onReady }: SceneProps) {
+  return (
+    <Canvas
+      camera={{ position: [0, 0, 6.4], fov: 31 }}
+      dpr={[1, 2]}
+      frameloop={active ? (animate ? "always" : "demand") : "never"}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      aria-hidden="true"
+    >
+      <Environment />
+      <hemisphereLight args={["#ffffff", "#b6c3d6", 1.05]} />
+      <directionalLight position={[-3, 4, 5]} intensity={2.1} />
+      <Suspense fallback={null}>
+        <Rig progress={progress} animate={animate}>
+          <Tablet file={file} onReady={onReady} />
+        </Rig>
+        <Rig progress={progress} animate={animate} depth={1.8}>
+          {SOLIDS.map((solid) => <Solid key={solid.kind} {...solid} animate={animate} />)}
+        </Rig>
+        <GroundShadow />
+      </Suspense>
+    </Canvas>
   );
 }

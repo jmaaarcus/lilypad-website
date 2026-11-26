@@ -30,33 +30,36 @@ const SUPPORT_FAQ: FaqItem[] = [
 
 export function Support() {
   return (
-    <div className="support-page mx-auto max-w-6xl px-5 pb-20 pt-12 sm:px-7 md:pb-28 md:pt-16 lg:px-10">
-      <header className="support-hero grid gap-10 border-b border-line pb-12 md:grid-cols-[1.05fr_0.95fr] md:items-end md:gap-16 md:pb-16">
-        <div>
-          <h1 className="display max-w-[9ch] text-[clamp(3.4rem,2rem+5vw,6.2rem)] leading-[0.94]">Let's figure it out.</h1>
-          <p className="support-intro mt-6 max-w-[44ch] text-lg leading-relaxed text-ink-2">
-            Something not working as expected? Have a question or an idea? Send me a note and I'll get back to you.
-          </p>
-        </div>
-        <Reveal className="support-contact-card">
-          <span className="support-contact-icon"><EnvelopeSimple size={22} weight="regular" aria-hidden="true" /></span>
-          <p className="support-contact-label">Email the developer</p>
-          <a href={`mailto:${CONTACT_EMAIL}`} className="support-contact-address">
-            {CONTACT_EMAIL}<ArrowUpRight size={17} aria-hidden="true" />
-          </a>
-          <p className="support-contact-note">A direct line to the person who makes Lilypad.</p>
-        </Reveal>
-      </header>
+    <div className="relative isolate overflow-hidden">
+      <div aria-hidden="true" className="paper-grid absolute inset-x-0 top-0 -z-10 h-[620px]" />
+      <div className="page pb-[4.5rem] pt-10 md:pb-24">
+        <header className="mt-14 grid gap-12 md:grid-cols-[1.05fr_0.95fr] md:items-center md:gap-16">
+          <Reveal>
+            <h1 className="display title-page max-w-[9ch]">Let's figure it out.</h1>
+            <p className="lede mt-6 max-w-[44ch]">
+              Something not working as expected? Have a question or an idea? Send me a note and I'll get back to you.
+            </p>
+          </Reveal>
+          <Reveal delay={0.1} className="[perspective:1400px]">
+              <div className="rounded-panel bg-[linear-gradient(155deg,#1f56bd,#3b78e5_55%,#6d9cf0)] p-8 text-white shadow-lift sm:p-10">
+                <span className="grid h-12 w-12 place-items-center rounded-full bg-white/15"><EnvelopeSimple size={24} weight="duotone" aria-hidden="true" /></span>
+                <p className="mt-8 text-sm font-medium text-white/80">Email the developer</p>
+                <a href={`mailto:${CONTACT_EMAIL}`} className="mt-2 inline-flex items-center gap-2 break-all text-xl font-semibold tracking-[-0.02em] underline-offset-4 hover:underline sm:text-2xl">
+                  {CONTACT_EMAIL}<ArrowUpRight size={18} aria-hidden="true" />
+                </a>
+                <p className="mt-6 text-white/80">A direct line to the person who makes Lilypad.</p>
+              </div>
+          </Reveal>
+        </header>
 
-      <section aria-labelledby="support-faq-title" className="support-faq-section pt-16 md:pt-24">
-        <div className="support-faq-heading grid gap-4 border-b border-line pb-7 md:grid-cols-[0.8fr_1.2fr] md:items-end md:gap-12">
-          <div>
-            <h2 id="support-faq-title" className="display text-[clamp(2.2rem,1.3rem+3vw,3.7rem)] leading-[1.02]">A few quick answers.</h2>
-          </div>
-          <p className="max-w-[46ch] leading-relaxed text-ink-2">Start here for the things people ask most. If you still need a hand, send me an email.</p>
-        </div>
-        <div className="mt-2"><Faq items={SUPPORT_FAQ} /></div>
-      </section>
+        <section aria-labelledby="support-faq-title" className="split mt-[4.5rem] md:mt-24">
+          <Reveal>
+            <h2 id="support-faq-title" className="display title-section max-w-[11ch]">A few quick answers.</h2>
+            <p className="lede mt-5 max-w-[36ch]">Start here for the things people ask most. If you still need a hand, send me an email.</p>
+          </Reveal>
+          <Faq items={SUPPORT_FAQ} />
+        </section>
+      </div>
     </div>
   );
 }

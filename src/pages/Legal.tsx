@@ -7,18 +7,18 @@ export function Legal({ doc }: { doc: "privacy" | "terms" }) {
   const document = docs[doc];
 
   return (
-    <div className="legal-page mx-auto max-w-6xl px-5 pb-20 pt-12 sm:px-7 md:pb-28 md:pt-16 lg:px-10">
-      <header className="legal-page-header">
-        <Link to="/" className="legal-back-link"><ArrowLeft size={15} aria-hidden="true" /> Back to Lilypad</Link>
-        <h1 className="display mt-4 max-w-[12ch] text-[clamp(3rem,1.8rem+4.6vw,5.6rem)] leading-[0.96]">{document.title}</h1>
-        <p className="legal-page-meta mt-5 text-sm">{document.meta}</p>
+    <div className="page pb-[4.5rem] pt-10 md:pb-24">
+      <header className="mt-14 border-b border-line pb-10">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 transition-colors hover:text-accent"><ArrowLeft size={15} aria-hidden="true" /> Back to Lilypad</Link>
+        <h1 className="display title-page mt-5 max-w-[14ch]">{document.title}</h1>
+        <p className="mt-4 text-sm text-ink-3">{document.meta}</p>
       </header>
 
-      <div className="legal-page-grid mt-10 grid gap-9 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20">
-        <details className="legal-mobile-toc lg:hidden">
-          <summary>Jump to a section</summary>
-          <nav aria-label="Legal document sections">
-            <ol>
+      <div className="mt-10 grid gap-9 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20">
+        <details className="panel px-5 py-4 lg:hidden">
+          <summary className="cursor-pointer font-medium">Jump to a section</summary>
+          <nav aria-label="Legal document sections" className="legal-toc mt-4">
+            <ol className="grid gap-2.5">
               {document.sections.map((section) => (
                 <li key={section.id}>
                   <a href={`#${section.id}`} dangerouslySetInnerHTML={{ __html: section.title }} />
@@ -28,10 +28,10 @@ export function Legal({ doc }: { doc: "privacy" | "terms" }) {
           </nav>
         </details>
 
-        <aside className="legal-sidebar hidden lg:block">
+        <aside className="hidden lg:block">
           <nav aria-label="On this page" className="legal-toc sticky top-8">
-            <p className="eyebrow">On this page</p>
-            <ol className="mt-5 grid gap-3">
+            <p className="text-sm font-semibold text-ink">On this page</p>
+            <ol className="mt-4 grid gap-2.5 border-l border-line pl-4">
               {document.sections.map((section) => (
                 <li key={section.id}>
                   <a href={`#${section.id}`} dangerouslySetInnerHTML={{ __html: section.title }} />
